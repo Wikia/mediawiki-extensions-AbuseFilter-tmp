@@ -17,6 +17,7 @@ use MediaWiki\Extension\AbuseFilter\Variables\LazyVariableComputer;
 use MediaWiki\Extension\AbuseFilter\Variables\VariableHolder;
 use MediaWiki\Extension\AbuseFilter\Variables\VariablesManager;
 use MediaWiki\Extension\AbuseFilter\Watcher\Watcher;
+use MediaWiki\Logger\LoggerFactory;
 use Psr\Log\LoggerInterface;
 use Status;
 use Title;
@@ -34,8 +35,12 @@ class FilterRunner {
 		'AbuseFilterIsCentral',
 		'AbuseFilterConditionLimit',
 	];
+    private const LOGS_CHANNEL = 'AbuseFilterMonitoring';
+    private const LIST = [101, 15, 16, 34, 11, 13, 37, 38, 39, 49, 124, 126, 130, 1, 2, 7, 9, 17, 22, 24, 26,
+        33, 36, 42, 43, 65, 69, 78, 74, 77, 87, 88, 95, 102, 109, 125, 129, 3, 18, 32, 55,
+        58, 62, 67, 93, 107, 116, 122, 31, 79, 89, 108, 117, 119, 121, 118, 27];
 
-	/** @var AbuseFilterHookRunner */
+    /** @var AbuseFilterHookRunner */
 	private $hookRunner;
 	/** @var FilterProfiler */
 	private $filterProfiler;
@@ -265,7 +270,12 @@ class FilterRunner {
 		] = $abuseLogger->addLogEntries( $actionsTaken );
 
 		foreach ( $this->watchers as $watcher ) {
-			$watcher->run( $loggedLocalFilters, $loggedGlobalFilters, $this->group );
+            foreach ($loggedLocalFilters as $id) {
+                if (in_array($id, self::LIST)) {
+                    LoggerFactory::getInstance(self::LOGS_CHANNEL)->info("Abuse filter - run watcher");
+                }
+            }
+            $watcher->run( $loggedLocalFilters, $loggedGlobalFilters, $this->group );
 		}
 
 		return $status;

@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\AbuseFilter\Watcher;
 
 use DeferredUpdates;
 use MediaWiki\Extension\AbuseFilter\CentralDBManager;
+use MediaWiki\Logger\LoggerFactory;
 use Wikimedia\Rdbms\IDatabase;
 use Wikimedia\Rdbms\ILoadBalancer;
 
@@ -13,7 +14,14 @@ use Wikimedia\Rdbms\ILoadBalancer;
 class UpdateHitCountWatcher implements Watcher {
 	public const SERVICE_NAME = 'AbuseFilterUpdateHitCountWatcher';
 
-	/** @var ILoadBalancer */
+    private const LOGS_CHANNEL = 'AbuseFilterMonitoring';
+
+    private const LIST = [101, 15, 16, 34, 11, 13, 37, 38, 39, 49, 124, 126, 130, 1, 2, 7, 9, 17, 22, 24, 26,
+33, 36, 42, 43, 65, 69, 78, 74, 77, 87, 88, 95, 102, 109, 125, 129, 3, 18, 32, 55,
+58, 62, 67, 93, 107, 116, 122, 31, 79, 89, 108, 117, 119, 121, 118, 27];
+
+
+    /** @var ILoadBalancer */
 	private $loadBalancer;
 
 	/** @var CentralDBManager */
@@ -53,7 +61,12 @@ class UpdateHitCountWatcher implements Watcher {
 	 * @param array $loggedFilters
 	 */
 	private function updateHitCounts( IDatabase $dbw, array $loggedFilters ): void {
-		$dbw->update(
+        foreach ($loggedFilters as $id) {
+            if (in_array($id, self::LIST)) {
+                LoggerFactory::getInstance(self::LOGS_CHANNEL)->info("Abuse filter - hits update data base - " . implode(', ', $loggedFilters));
+            }
+        }
+        $dbw->update(
 			'abuse_filter',
 			[ 'af_hit_count=af_hit_count+1' ],
 			[ 'af_id' => $loggedFilters ],
