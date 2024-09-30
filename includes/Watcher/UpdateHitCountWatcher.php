@@ -56,7 +56,9 @@ class UpdateHitCountWatcher implements Watcher {
 	 * @param array $loggedFilters
 	 */
 	private function updateHitCounts( IDatabase $dbw, array $loggedFilters ): void {
-        LoggerFactory::getInstance(self::LOGS_CHANNEL)->info("Abuse filter - hits update data base - " . implode(', ', $loggedFilters));
+        foreach ( $loggedFilters as $id ) {
+                LoggerFactory::getInstance( self::LOGS_CHANNEL )->info( "Abuse filter - hits update data base - " . $id );
+        }
         $dbw->update(
 			'abuse_filter',
 			[ 'af_hit_count=af_hit_count+1' ],
