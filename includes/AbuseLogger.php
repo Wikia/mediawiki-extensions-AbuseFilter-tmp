@@ -11,6 +11,7 @@ use MediaWiki\Config\ServiceOptions;
 use MediaWiki\Extension\AbuseFilter\Variables\VariableHolder;
 use MediaWiki\Extension\AbuseFilter\Variables\VariablesBlobStore;
 use MediaWiki\Extension\AbuseFilter\Variables\VariablesManager;
+use MediaWiki\Logger\LoggerFactory;
 use MediaWiki\User\UserIdentityValue;
 use Title;
 use User;
@@ -24,7 +25,9 @@ class AbuseLogger {
 		'AbuseFilterNotificationsPrivate',
 	];
 
-	/** @var Title */
+    private const LOGS_CHANNEL = 'AbuseFilterMonitoring';
+
+    /** @var Title */
 	private $title;
 	/** @var User */
 	private $user;
@@ -140,7 +143,8 @@ class AbuseLogger {
 					$centralLogRows[] = $centralLog;
 					$loggedGlobalFilters[] = $filterID;
 				} else {
-					$loggedLocalFilters[] = $filterID;
+                    LoggerFactory::getInstance(self::LOGS_CHANNEL)->info("Abuse filter - filter hits update list");
+                    $loggedLocalFilters[] = $filterID;
 				}
 			}
 		}
@@ -161,8 +165,8 @@ class AbuseLogger {
 			$this->title,
 			[ 'local' => $localLogIDs, 'global' => $globalLogIDs ]
 		);
-
-		return [ 'local' => $loggedLocalFilters, 'global' => $loggedGlobalFilters ];
+        LoggerFactory::getInstance(self::LOGS_CHANNEL)->info("Abuse filter - filter hits list - " . implode(', ', $loggedLocalFilters));
+        return [ 'local' => $loggedLocalFilters, 'global' => $loggedGlobalFilters ];
 	}
 
 	/**
@@ -228,7 +232,8 @@ class AbuseLogger {
 		foreach ( $logRows as $data ) {
 			$data['afl_var_dump'] = $varDump;
 			$dbw->insert( 'abuse_filter_log', $data, __METHOD__ );
-			$loggedIDs[] = $data['afl_id'] = $dbw->insertId();
+            LoggerFactory::getInstance(self::LOGS_CHANNEL)->info("Abuse filter - inserted log - " . $data['afl_filter_id']);
+            $loggedIDs[] = $data['afl_id'] = $dbw->insertId();
 
 			// Send data to CheckUser if installed and we
 			// aren't already sending a notification to recentchanges
